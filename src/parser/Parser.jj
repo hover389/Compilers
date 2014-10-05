@@ -152,15 +152,146 @@ TOKEN_MGR_DECLS :
 /* copy your lexer rules from A1 below... */
 /******************************************/
 
-TOKEN :
+TOKEN : /* KEYWORDS and SPECIAL SYMBOLS */
 {
-  < FOE: "foe" >
+  < CLASS: "class" >
+| <COMMA: ",">
+| <BREAK: "break">
+| <LBRACKET: "[">
+| <RBRACKET: "]">
+| <LBRACE: "{">
+| <RBRACE: "}">
+| <LPAREN: "(">
+| <RPAREN: ")">
+| <RETURN: "return">
+| <CASE: "case">
+| <ELSE: "else">
+| <EXTENDS: "extends">
+| <FINALLY: "finally">
+| <FOR: "for">
+| <IF: "if">
+| <IMPORT: "import">
+| <INSTOF: "instanceof">
+| <NEW: "new">
+| <THROW: "throw">
+| <THROWS: "throws">
+| <TRANSIENT: "transient">
+| <TRY: "try">
+| <WHILE: "while">
+| <MULT: "*">
+| <ADD: "+">
+| <SUB: "-">
+| <LESSTHAN: "<">
+| <GREATERTHAN: ">">
+| <SEMICOLON: ";">
+| <ASSIGN: "=">
+| <MOD: "%">
+| <DIV: "/">
+| <NOT: "!">
+| <NOTEQUALS: "!=">
+| <LESSEQUAL: "<=">
+| <GREATEREQUAL: ">=">
+| <AND: "&&">
+| <OR: "||">
+| <INCREMENT: "++">
+| <DECREMENT: "--">
+| <MEMBERREF: ".">
+
+
+}
+
+TOKEN : /* CONSTANTS - FIXME: broken, only match "Foo", "Goo", or "Zoo" */
+{
+  < INT_CONST: (["0"-"9"])+ >
+	{
+        try{
+            int st = Integer.parseInt(image.toString());
+        }
+        catch(NumberFormatException e){   
+          errorHandler.register(
+          errorHandler.LEX_ERROR,
+           Lexer.getCurrFilename(),
+           JavaCharStream.getBeginLine(),
+           "Int constant is too long " + image);
+      }
+	}
+|
+  < BOOLEAN_CONST: "true"|"false" >
+|
+  < STRING_CONST: "\""(("\\\"")*(~["\""])+)*"\"" >
+	{
+    String st = image.toString();
+    if(st.length() > 5000)
+           errorHandler.register(
+         errorHandler.LEX_ERROR,
+         Lexer.getCurrFilename(),
+         JavaCharStream.getBeginLine(),
+         "String Constent is too long " + image);
+       char[] StCon = image.toString().toCharArray();
+   for(int i = 0; i < StCon.length-1;i++)
+   {
+       if(StCon[i] == '\\')
+   {
+    if(StCon[i+1] != 'n' && StCon[i+1] != 't' && 
+           StCon[i+1] != '\"' && StCon[i+1] != 'f' &&
+           StCon[i+1] !=  '\\')
+    {
+         errorHandler.register(
+          errorHandler.LEX_ERROR,
+          Lexer.getCurrFilename(),
+          JavaCharStream.getBeginLine(),
+          "Unsupported escape character " + image);
+    }
+ }  
+}
+}
+}
+
+TOKEN : /* IDs - FIXME: broken, only match "Boo" */
+{
+  < ID: ["A"-"Z","a"-"z"](["a"-"z","A"-"Z","0"-"9","#","@","$","^","&",":","?","~","`","\'","_"])* >
+
+	{
+   
+   char[] word = image.toString().toCharArray();
+   for(int i = 0; i < word.length-1;i++)
+   {
+   if(word[i] == '@' |word[i] == '#' | word[i] == '$' |
+        word[i] == '^' | word[i] == '&' | word[i] == ':'|
+        word[i] == '?' | word[i] == '~' | word[i] == '`' |
+        word[i] == '\'' )
+   {
+     errorHandler.register(
+      errorHandler.LEX_ERROR,
+      Lexer.getCurrFilename(),
+      JavaCharStream.getBeginLine(),
+      "Unsupported character " + image);
+    }
+   }  
+   }
 }
 
 <*>
 TOKEN : /* EOF */
 {
   <EOF> { errorHandler.checkErrors(); }
+}
+
+SKIP:
+{
+	" "
+|	"\n"
+|	"\t"
+|	"\r"
+| < "//" (~["\r", "\n"])* >
+| < "/*" > : MULTICOMMENT
+
+}
+
+<MULTICOMMENT> SKIP :
+{
+	<"*/"> : DEFAULT
+|  	< ~[]>
 }
 
 /******************************************/
