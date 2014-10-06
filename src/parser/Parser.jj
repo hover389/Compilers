@@ -319,6 +319,111 @@ Precedence (from highest to lowest)
 void Program() :
 {}
 {
-   <FOE> <EOF>
+   <FOE>Class() MoreClass() <EOF>
 }
+
+void MoreClass():
+{}
+{
+	Class() MoreClass()
+|	{} /*epsilon*/
+}
+
+void Member():
+{}
+{
+	Method() Field()
+}
+
+void Stmt():
+{}
+{
+	ExprStmt()
+|	DeclStmt()
+|	IfStmt()
+|	WhileStmt()
+|	ForStmt()
+|	BreakStmt()
+|	ReturnStmt()
+|	BlockStmt()
+
+}
+
+void ExprStmt():
+{}
+{
+	Expr();
+}
+
+void BreakStmt():
+{}
+{
+	<BREAK> <SEMICOLON>
+}
+
+void BlockStmt():
+{}
+{
+	<LBRACE> <RBRACE> | <LBRACE> Stmt() MoreStmt() <RBRACE>
+}
+
+void MoreStmt():
+{}
+{
+	Stmt() MoreStmt() | {} /*epsilon*/
+}
+
+void Expr():
+{}
+{
+	AssignExpr()
+|	DispatchExpr()
+|	NewExpr()
+|	InstanceofExpr()
+|	CastExpr()
+|	BinaryExpr()
+|	UnaryExpr()
+|	ConstExpr()
+|	VarExpr()
+|	<LPAREN> Expr() <RPAREN>
+	
+}
+
+void AssignExpr():
+{}
+{
+	VarExpr() <ASSIGN> Expr()
+}
+
+void NewExpr():
+{}
+{
+	<NEW> <ID> <LPAREN> <RPAREN> | <NEW> <ID> <LBRACKET> Expr() <RBRACKET>
+}
+
+void BinaryExpr():
+{}
+{
+	BinaryArithExpr() | BinaryCompExpr() | BinaryLogicExpr()
+}
+
+void UnaryExpr():
+{}
+{
+	UnaryNegExpr() | UnaryNotExpr() | UnaryIncrExpr() | UnaryDecrExpr()
+}
+
+void ConstExpr():
+{}
+{
+	<INT_CONST> | <BOOLEAN_CONST> | <STRING_CONST>
+}
+
+	
+
+
+
+
+
+
 
