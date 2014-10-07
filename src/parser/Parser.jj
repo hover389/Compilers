@@ -627,6 +627,129 @@ void ConstExpr():
 	<INT_CONST> | <BOOLEAN_CONST> | <STRING_CONST>
 }
 
+void BinaryArithExpr():
+{}
+{
+	Arith1() Arith()
+}
+
+void Arith():
+{}
+{
+	<ADD> Expr()
+|	<SUB> Expr()
+|	{} /*epsilon*/
+}
+
+void Arith1():
+{}
+{
+	Arith3() Arith2()
+}
+
+void Arith2():
+{}
+{
+	<MULT> Arith1()
+|	<DIV> Arith1()
+|	<MOD> Arith1()
+|	{} /*epsilon*/
+}
+
+void Arith3()"
+{}
+{
+	<LPAREN> Expr() <RPAREN>
+|	<INT_CONSTANT>
+}
+
+void BinaryCompExpr():
+{}
+{
+
+}
+//Binary logic might be wrong
+void BinaryLogicExpr();
+{}
+{
+	Logic1() Logic()
+}
+
+void Logic():
+{}
+{
+	<AND> Expr()
+|	{} /*epsilon*/
+}
+
+void Logic1():
+{}
+{
+	Logic3() Logic2()
+}
+
+void Logic2():
+{}
+{
+	<OR> Expr()
+| 	{} /*epsilon*/
+}
+
+void Logic3():
+{}
+{
+	<BOOLEAN_CONSTANT>
+{
+
+void UnaryNegExpr():
+{}
+{
+	<SUB> Expr()
+}
+
+void UnaryNotExpr():
+{}
+{
+	<NOT> Expr()
+}
+
+void UnaryIncrExpr():
+{}
+{
+	//fix precedence
+	<INCREMENT> Expr()
+|	Expr() <INCREMENT>
+}
+
+void UnaryDecrExpr():
+{}
+{
+	//fix precedence
+	<DECREMENT> Expr()
+|	Expr() <DECREMENT>
+}
+
+void VarExpr():
+{}
+{
+	Expr() <MEMBERREF> <ID> VarExpr'()
+|	<MEMBERREF> <ID> VarExpr''()
+}
+
+void VarExpr'():
+{}
+{
+	<LBRACKET> Expr() <RBRACKET>
+|	{} /*epsilon*/
+}
+
+void VarExpr''():
+{}
+{
+	<LBRACKET> Expr() <RBRACKET> 
+|	{} /*epsilon*/
+}
+
 	
 
 
