@@ -319,7 +319,7 @@ Precedence (from highest to lowest)
 void Program() :
 {}
 {
-   <FOE>Class() MoreClass() <EOF>
+   Class() MoreClass() <EOF>
 }
 
 void MoreClass():
@@ -329,10 +329,91 @@ void MoreClass():
 |	{} /*epsilon*/
 }
 
+void Class():
+{}
+{
+	<CLASS> <ID> Class'()
+}
+
+void Class'():
+{}
+{
+	<EXTENDS> <ID> <LBRACE> MoreMembers() <RBRACE>
+|	<LBRACE> MoreMember() <RBRACE>
+}
+
+void MoreMember():
+{}
+{
+	Member() MoreMember()
+|	{} /*epsilon*/
+}
+
 void Member():
 {}
 {
 	Method() Field()
+}
+
+void Method():
+{}
+{
+	<ID> Method'()
+}
+
+void Method'():
+{}
+{
+	<LBRACKET> <RBRACKET> <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
+|	<ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
+}
+
+void MoreFormal():
+{}
+{
+	Formal() MoreFormal'()
+|	{} /*epsilon*/
+}
+
+void MoreFormal'():
+{}
+{
+	<COMMA> Formal() MoreFormal'()
+|	{} /*epsilon*/
+}
+
+void Field():
+{}
+{
+	<ID> Field'()
+
+}
+
+void Field'():
+{}
+{
+	<LBRACKET> <RBRACKET> <ID> Field''()
+|	<ID> Field''()
+}
+
+void Field''():
+{}
+{
+	<ASSIGN> Expr() <SEMICOLON>
+|	<SEMICOLON>
+}
+
+void Formal():
+{}
+{
+	<ID> Formal'()
+}
+
+void Formal'():
+{}
+{
+	<LBRACKET> <RBRACKET> <ID>
+|	<ID>
 }
 
 void Stmt():
@@ -355,16 +436,96 @@ void ExprStmt():
 	Expr();
 }
 
+void DeclStmt():
+{}
+{
+	<ID> DeclStmt'()
+}
+
+void DeclStmt'():
+{}
+{
+	<LBRACKET> <RBRACKET> <ID> <ASSIGN> Expr() <SEMICOLON>
+|	<ID> <ASSIGN> Expr() <SEMICOLON>
+}
+
+void IfStmt():
+{}
+{
+	<IF> <LPAREN> Expr() <RPAREN> IfStmt'() 
+}
+
+void IfStmt'():
+{}
+{
+	{} /*epsilon*/
+|	<ELSE> Stmt()
+}
+
+void WhileStmt():
+{}
+{
+	<WHILE> <LPAREN> Expr() <RPAREN> Stmt()
+}
+
+void ForStmt():
+{}
+{
+	<FOR> <LPAREN> ForStmt'()
+}
+
+void ForStmt'():
+{}
+{
+	Expr() <SEMICOLON> ForStmt''()
+|	<SEMICOLON> ForStmt''''()
+}
+
+void ForStmt''():
+{}
+{
+	<SEMICOLON> ForStmt'''()
+|	Expr() <SEMICOLON> ForStmt'''()
+}
+
+void ForStmt'''():
+{}
+{
+	Expr() <RPAREN> Stmt()
+|	<RPAREN> Stmt()
+}
+
+void ForStmt''''():
+{}
+{
+	<SEMICOLON> ForStmt'''()
+|	Expr() <SEMICOLON> ForStmt'''()
+}
+
+
 void BreakStmt():
 {}
 {
 	<BREAK> <SEMICOLON>
 }
 
+void ReturnStmt():
+{}
+{
+	<RETURN> ReturnStmt'()
+}
+
+void ReturnStmt'():
+{}
+{
+	Expr() <SEMICOLON>
+|	<SEMICOLON>
+}
+
 void BlockStmt():
 {}
 {
-	<LBRACE> <RBRACE> | <LBRACE> Stmt() MoreStmt() <RBRACE>
+	<LBRACE> <RBRACE> | <LBRACE> MoreStmt() <RBRACE>
 }
 
 void MoreStmt():
@@ -395,10 +556,57 @@ void AssignExpr():
 	VarExpr() <ASSIGN> Expr()
 }
 
+void DispatchExpr():
+{}
+{
+	Expr() <MEMBERREF> <ID> <LPAREN> MoreExpr() <RPAREN>
+|	<ID> <LPAREN> MoreExpr() <RPAREN>
+}
+
+void MoreExpr():
+{}
+{
+	Expr() MoreExpr'()
+|	{} /*epsilon*/
+}
+
+void MoreExpr'():
+{}
+{
+	<COMMA> Expr() MoreExpr()
+|	{} /*epsilon*/
+}
+
 void NewExpr():
 {}
 {
 	<NEW> <ID> <LPAREN> <RPAREN> | <NEW> <ID> <LBRACKET> Expr() <RBRACKET>
+}
+
+void InstanceofExpr():
+{}
+{
+	Expr() <INSTOF> <ID> InstanceofExpr'()
+}
+
+void InstanceofExpr'():
+{}
+{
+	<LBRACKET> <RBRACKET>
+|	{} /*epsilon*/
+}
+
+void CastExpr():
+{}
+{
+	<LPAREN> <ID> CastExpr'()
+}
+
+void CastExpr'():
+{}
+{
+	<LBRACKET> <RBRACKET> <RPAREN> <LPAREN> Expr() <RPAREN>
+|	<RPAREN> <LPAREN> Expr() <RPAREN>
 }
 
 void BinaryExpr():
