@@ -660,7 +660,7 @@ void Arith3()"
 {}
 {
 	<LPAREN> Expr() <RPAREN>
-|	<INT_CONSTANT>
+|	<Expr()
 }
 
 void BinaryCompExpr():
@@ -698,7 +698,7 @@ void Logic2():
 void Logic3():
 {}
 {
-	<BOOLEAN_CONSTANT>
+	Expr()
 {
 
 void UnaryNegExpr():
