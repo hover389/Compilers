@@ -355,7 +355,7 @@ void Member():
 	Method() 
 |	Field()
 }
-/*
+
 void Method():
 {}
 {
@@ -368,20 +368,6 @@ void Method'():
 	<LBRACKET> <RBRACKET> <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
 |	<ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
 }
-*/
-
-void Method():
-{}
-{
-	<ID> <ID> <LPAREN> Method`()
-}
-
-void Method`():
-{}
-{
-	MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
-}
-
 
 void MoreFormal():
 {}
