@@ -22,7 +22,6 @@
    IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A 
    PARTICULAR PURPOSE. 
 */
-
 options {
   JAVA_UNICODE_ESCAPE = true;
 }
@@ -188,6 +187,7 @@ TOKEN : /* KEYWORDS and SPECIAL SYMBOLS */
 | <MOD: "%">
 | <DIV: "/">
 | <NOT: "!">
+| <EQUALS: "==">
 | <NOTEQUALS: "!=">
 | <LESSEQUAL: "<=">
 | <GREATEREQUAL: ">=">
@@ -203,72 +203,18 @@ TOKEN : /* KEYWORDS and SPECIAL SYMBOLS */
 TOKEN : /* CONSTANTS - FIXME: broken, only match "Foo", "Goo", or "Zoo" */
 {
   < INT_CONST: (["0"-"9"])+ >
-	{
-        try{
-            int st = Integer.parseInt(image.toString());
-        }
-        catch(NumberFormatException e){   
-          errorHandler.register(
-          errorHandler.LEX_ERROR,
-           Lexer.getCurrFilename(),
-           JavaCharStream.getBeginLine(),
-           "Int constant is too long " + image);
-      }
-	}
+	
 |
   < BOOLEAN_CONST: "true"|"false" >
 |
   < STRING_CONST: "\""(("\\\"")*(~["\""])+)*"\"" >
-	{
-    String st = image.toString();
-    if(st.length() > 5000)
-           errorHandler.register(
-         errorHandler.LEX_ERROR,
-         Lexer.getCurrFilename(),
-         JavaCharStream.getBeginLine(),
-         "String Constent is too long " + image);
-       char[] StCon = image.toString().toCharArray();
-   for(int i = 0; i < StCon.length-1;i++)
-   {
-       if(StCon[i] == '\\')
-   {
-    if(StCon[i+1] != 'n' && StCon[i+1] != 't' && 
-           StCon[i+1] != '\"' && StCon[i+1] != 'f' &&
-           StCon[i+1] !=  '\\')
-    {
-         errorHandler.register(
-          errorHandler.LEX_ERROR,
-          Lexer.getCurrFilename(),
-          JavaCharStream.getBeginLine(),
-          "Unsupported escape character " + image);
-    }
- }  
-}
-}
-}
-
+   
+	}
 TOKEN : /* IDs - FIXME: broken, only match "Boo" */
 {
   < ID: ["A"-"Z","a"-"z"](["a"-"z","A"-"Z","0"-"9","#","@","$","^","&",":","?","~","`","\'","_"])* >
 
-	{
    
-   char[] word = image.toString().toCharArray();
-   for(int i = 0; i < word.length-1;i++)
-   {
-   if(word[i] == '@' |word[i] == '#' | word[i] == '$' |
-        word[i] == '^' | word[i] == '&' | word[i] == ':'|
-        word[i] == '?' | word[i] == '~' | word[i] == '`' |
-        word[i] == '\'' )
-   {
-     errorHandler.register(
-      errorHandler.LEX_ERROR,
-      Lexer.getCurrFilename(),
-      JavaCharStream.getBeginLine(),
-      "Unsupported character " + image);
-    }
-   }  
-   }
 }
 
 <*>
@@ -332,13 +278,13 @@ void MoreClass():
 void Class():
 {}
 {
-	<CLASS> <ID> Class'()
+	<CLASS> <ID> ClassPrime()
 }
 
-void Class'():
+void ClassPrime():
 {}
 {
-	<EXTENDS> <ID> <LBRACE> MoreMembers() <RBRACE>
+	<EXTENDS> <ID> <LBRACE> MoreMember() <RBRACE>
 |	<LBRACE> MoreMember() <RBRACE>
 }
 
@@ -352,6 +298,7 @@ void MoreMember():
 void Member():
 {}
 {
+    LOOKAHEAD(5)
 	Method() 
 |	Field()
 }
@@ -359,45 +306,58 @@ void Member():
 void Method():
 {}
 {
-	<ID> Method'()
+	<ID> MethodPrime()
 }
-
-void Method'():
+/*
+void MethodPrime():
 {}
 {
-	<LBRACKET> <RBRACKET> <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
-|	<ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
+    <LBRACKET> <RBRACKET> <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE> 
+|   <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
 }
+*/
+
+
+void MethodPrime():
+{}
+{
+    <LBRACKET> <RBRACKET> <ID> <LPAREN> (Formal() <COMMA>)*   <RPAREN> <LBRACE> (Stmt())* <RBRACE>
+    |	<ID> <LPAREN> (Formal() <COMMA> )*  <RPAREN> <LBRACE> (Stmt())* <RBRACE>
+}
+
+
+
+
 
 void MoreFormal():
 {}
 {
-	Formal() MoreFormal'()
-|	{} /*epsilon*/
+	Formal() MoreFormalPrime()
+	    |	{} /*epsilon*/
 }
 
-void MoreFormal'():
+void MoreFormalPrime():
 {}
 {
-	<COMMA> Formal() MoreFormal'()
-|	{} /*epsilon*/
+	<COMMA> Formal() MoreFormalPrime()
+	|	{} /*epsilon*/
 }
 
 void Field():
 {}
 {
-	<ID> Field'()
+	<ID> FieldPrime()
 
 }
 
-void Field'():
+void FieldPrime():
 {}
 {
-	<LBRACKET> <RBRACKET> <ID> Field''()
-|	<ID> Field''()
+	<LBRACKET> <RBRACKET> <ID> FieldDoublePrime()
+|	<ID> FieldDoublePrime()
 }
 
-void Field''():
+void FieldDoublePrime():
 {}
 {
 	<ASSIGN> Expr() <SEMICOLON>
@@ -407,10 +367,10 @@ void Field''():
 void Formal():
 {}
 {
-	<ID> Formal'()
+	<ID> FormalPrime()
 }
 
-void Formal'():
+void FormalPrime():
 {}
 {
 	<LBRACKET> <RBRACKET> <ID>
@@ -420,6 +380,7 @@ void Formal'():
 void Stmt():
 {}
 {
+    LOOKAHEAD(2)
 	ExprStmt()
 |	DeclStmt()
 |	IfStmt()
@@ -434,23 +395,23 @@ void Stmt():
 void ExprStmt():
 {}
 {
-	Expr();
+	Expr()
 }
 
 void DeclStmt():
 {}
 {
-	<ID> DeclStmt'()
+	<ID> DeclStmtPrime()
 }
 
-void DeclStmt'():
+void DeclStmtPrime():
 {}
 {
-	<LBRACKET> <RBRACKET> DeclStmt``()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
-|	DeclStmt``()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
+	<LBRACKET> <RBRACKET> DeclStmtDoublePrime()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
+|	DeclStmtDoublePrime()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
 }
 
-void Declstmt``():
+void DeclStmtDoublePrime():
 {}
 {
 	<ID> <ASSIGN> Expr() <SEMICOLON>
@@ -459,14 +420,15 @@ void Declstmt``():
 void IfStmt():
 {}
 {
-	<IF> <LPAREN> Expr() <RPAREN> IfStmt'() 
+	<IF> <LPAREN> Expr() <RPAREN> IfStmtPrime() 
 }
 
-void IfStmt'():
+void IfStmtPrime():
 {}
 {
-	{} /*epsilon*/
-|	<ELSE> Stmt()
+    
+     	<ELSE> Stmt()
+|       {}
 }
 
 void WhileStmt():
@@ -478,35 +440,35 @@ void WhileStmt():
 void ForStmt():
 {}
 {
-	<FOR> <LPAREN> ForStmt'()
+	<FOR> <LPAREN> ForStmtPrime()
 }
 
-void ForStmt'():
+void ForStmtPrime():
 {}
 {
-	Expr() <SEMICOLON> ForStmt''()
-|	<SEMICOLON> ForStmt''''()
+	Expr() <SEMICOLON> ForStmtDoublePrime()
+|	<SEMICOLON> ForStmtQuadPrime()
 }
 
-void ForStmt''():
+void ForStmtDoublePrime():
 {}
 {
-	<SEMICOLON> ForStmt'''()
-|	Expr() <SEMICOLON> ForStmt'''()
+	<SEMICOLON> ForStmtTriplePrime()
+|	Expr() <SEMICOLON> ForStmtTriplePrime()
 }
 
-void ForStmt'''():
+void ForStmtTriplePrime():
 {}
 {
 	Expr() <RPAREN> Stmt()
 |	<RPAREN> Stmt()
 }
 
-void ForStmt''''():
+void ForStmtQuadPrime():
 {}
 {
-	<SEMICOLON> ForStmt'''()
-|	Expr() <SEMICOLON> ForStmt'''()
+	<SEMICOLON> ForStmtTriplePrime()
+|	Expr() <SEMICOLON> ForStmtTriplePrime()
 }
 
 
@@ -519,10 +481,10 @@ void BreakStmt():
 void ReturnStmt():
 {}
 {
-	<RETURN> ReturnStmt'()
+	<RETURN> ReturnStmtPrime()
 }
 
-void ReturnStmt'():
+void ReturnStmtPrime():
 {}
 {
 	Expr() <SEMICOLON>
@@ -532,29 +494,76 @@ void ReturnStmt'():
 void BlockStmt():
 {}
 {
-	<LBRACE> <RBRACE> | <LBRACE> MoreStmt() <RBRACE>
+    <LBRACE> (Stmt())* <RBRACE>
 }
 
+/*
 void MoreStmt():
 {}
 {
-	Stmt() MoreStmt() | {} /*epsilon*/
+    Stmt() MoreStmt() | {}
 }
+*/
 
 void Expr():
 {}
 {
-	AssignExpr()
-|	DispatchExpr()
-|	NewExpr()
-|	InstanceofExpr()
-|	CastExpr()
-|	BinaryExpr()
-|	UnaryExpr()
-|	ConstExpr()
-|	VarExpr()
-|	<LPAREN> Expr() <RPAREN>
+    LOOKAHEAD(3)
+    AssignExpr() ExprPrime()
+	|	LOOKAHEAD(2) DispatchExpr() ExprPrime()
+	|	LOOKAHEAD(2) NewExpr() ExprPrime()
+	|	LOOKAHEAD(3)CastExpr() ExprPrime()
+	//|	BinaryExpr() ExprPrime()
+|	UnaryExpr() ExprPrime() 
+|	ConstExpr() ExprPrime() 
+|	VarExpr() ExprPrime()
+|	<LPAREN> Expr() <RPAREN> ExprPrime()
+	|       <INCREMENT> Expr() ExprPrime()
+	|      <DECREMENT> Expr() ExprPrime()
 	
+}
+
+void ExprDoublePrime():
+{}
+{
+    LOOKAHEAD(3)
+    AssignExpr() ExprPrime()
+	|	LOOKAHEAD(3) DispatchExpr() ExprPrime()
+|	NewExpr() ExprPrime()
+	|	LOOKAHEAD(3)CastExpr() ExprPrime()
+	//|	BinaryExpr() ExprPrime()
+|	UnaryExpr() ExprPrime() 
+|	ConstExpr() ExprPrime() 
+|	VarExpr() ExprPrime()
+|	<LPAREN> Expr() <RPAREN> ExprPrime()
+	|       <INCREMENT> Expr() ExprPrime()
+	|      <DECREMENT> Expr() ExprPrime()
+	| <MEMBERREF> <ID> <LPAREN> MoreExpr() <RPAREN> ExprDoublePrime() 
+	|{}
+	
+}
+
+void ExprPrime():
+{}
+{
+    LOOKAHEAD(3)
+    <INSTOF> <ID> ExprPrime() 
+|   <INSTOF> <ID> <LBRACKET> <RBRACKET> ExprPrime()
+|   <ADD> Expr() ExprPrime() 
+|   <SUB> Expr() ExprPrime()
+|   <MULT> Expr() ExprPrime()
+|   <DIV>  Expr() ExprPrime()
+|   <MOD> Expr() ExprPrime()
+|   <EQUALS> Expr() ExprPrime()
+|   <NOTEQUALS>  Expr() ExprPrime()
+|   <LESSTHAN>  Expr() ExprPrime()
+|   <LESSEQUAL>  Expr() ExprPrime()
+|   <GREATERTHAN>  Expr() ExprPrime()
+|   <GREATEREQUAL>  Expr() ExprPrime()
+|    <AND> Expr() ExprPrime()
+|   <OR> Expr() ExprPrime()
+|   <INCREMENT> | <DECREMENT>
+	|   {}
 }
 
 void AssignExpr():
@@ -566,24 +575,32 @@ void AssignExpr():
 void DispatchExpr():
 {}
 {
-	Expr() <MEMBERREF> DispatchExpr`()/*<ID> <LPAREN> MoreExpr() <RPAREN>*/
-|	DispatchExpr`()/*<ID> <LPAREN> MoreExpr() <RPAREN>*/
+      /*<ID> <LPAREN> MoreExpr() <RPAREN>*/
+	 	DispatchExprPrime() DispatchExprDoublePrime()  /*<ID> <LPAREN> MoreExpr() <RPAREN>*/
 }
 
-void DispatchExpr`():
+void DispatchExprDoublePrime():
 {}
 {
-	<ID> <LPAREN> MoreExpr() <RPAREN>
+    <MEMBERREF> DispatchExprPrime() DispatchExprDoublePrime()
+|   {}
 }
+
+void DispatchExprPrime():
+{}
+{
+    <ID> <LPAREN> MoreExpr() <RPAREN> ExprDoublePrime()
+	
+}
+
 
 void MoreExpr():
 {}
 {
-	Expr() MoreExpr'()
+	Expr() MoreExprPrime()
 |	{} /*epsilon*/
 }
-
-void MoreExpr'():
+void MoreExprPrime():
 {}
 {
 	<COMMA> Expr() MoreExpr()
@@ -593,45 +610,48 @@ void MoreExpr'():
 void NewExpr():
 {}
 {
+    LOOKAHEAD(3)
 	<NEW> <ID> <LPAREN> <RPAREN> | <NEW> <ID> <LBRACKET> Expr() <RBRACKET>
 }
 
+/*
 void InstanceofExpr():
 {}
 {
-	Expr() <INSTOF> <ID> InstanceofExpr'()
+     <INSTOF> <ID> InstanceofExprPrime() InstanceofExpr()
+|   {}
 }
 
-void InstanceofExpr'():
+void InstanceofExprPrime():
 {}
 {
 	<LBRACKET> <RBRACKET>
-|	{} /*epsilon*/
+|	{}
 }
-
+*/
 void CastExpr():
 {}
 {
-	<LPAREN> <ID> CastExpr'()
+	<LPAREN> <ID> CastExprPrime()
 }
 
-void CastExpr'():
+void CastExprPrime():
 {}
 {
 	<LBRACKET> <RBRACKET> <RPAREN> <LPAREN> Expr() <RPAREN>
 |	<RPAREN> <LPAREN> Expr() <RPAREN>
 }
-
+/*
 void BinaryExpr():
 {}
 {
-	BinaryArithExpr() | BinaryCompExpr() | BinaryLogicExpr()
+	BinaryArithExpr()  | BinaryCompExpr() | BinaryLogicExpr()
 }
-
+*/
 void UnaryExpr():
 {}
 {
-	UnaryNegExpr() | UnaryNotExpr() | UnaryIncrExpr() | UnaryDecrExpr()
+    UnaryNegExpr() | UnaryNotExpr() //| UnaryIncrExpr() | UnaryDecrExpr()
 }
 
 void ConstExpr():
@@ -639,19 +659,26 @@ void ConstExpr():
 {
 	<INT_CONST> | <BOOLEAN_CONST> | <STRING_CONST>
 }
-
+/*
 void BinaryArithExpr():
 {}
 {
-	Arith1() Arith()
+    <ADD> Expr() BinaryArithExpr() 
+|   <SUB> Expr() BinaryArithExpr()
+|   <MULT> Expr() BinaryArithExpr()
+|   <DIV>  Expr() BinaryArithExpr()
+|   <MOD> Expr() BinaryArithExpr()
+|   {}
+    
 }
-
+/*
+/*
 void Arith():
 {}
 {
 	<ADD> Expr()
 |	<SUB> Expr()
-|	{} /*epsilon*/
+|	{} epsilon
 }
 
 void Arith1():
@@ -666,40 +693,64 @@ void Arith2():
 	<MULT> Arith1()
 |	<DIV> Arith1()
 |	<MOD> Arith1()
-|	{} /*epsilon*/
+|	{} epsilon
 }
 
-void Arith3()"
+void Arith3():
 {}
 {
-	<LPAREN> Expr() <RPAREN>
+    <LPAREN> Expr() <RPAREN> Arith3Prime()
 |	Expr()
 }
 
+void Arith3Prime():
+{}
+{
+    Arith3Prime()
+|   {}
+}
+*/
+
+
+/*
 void BinaryCompExpr():
 {}
 {
-	Expr() Binary CompExpr`()
+    <EQUALS> Expr() BinaryCompExpr()
+|   <NOTEQUALS>  Expr() BinaryCompExpr()
+|   <LESSTHAN>  Expr() BinaryCompExpr()
+|   <LESSEQUAL>  Expr() BinaryCompExpr()
+|   <GREATERTHAN>  Expr() BinaryCompExpr()
+|   <GREATEREQUAL>  Expr() BinaryCompExpr()
+|   {}
+    
 }
-
-void BinaryCompExpr`():
+*/
+/*
+void BinaryCompExprPrime():
 {}
 {
 	<AND> Expr()
 |	<OR> Expr()
-
+}
+*/
 //Binary logic might be wrong
-void BinaryLogicExpr();
+/*
+void BinaryLogicExpr():
 {}
 {
-	Logic1() Logic()
+    <AND> Expr() BinaryLogicExpr()
+|   <OR> Expr() BinaryLogicExpr()
+	|    {} 
+   
 }
-
+*/
+/*
 void Logic():
 {}
 {
 	<AND> Expr()
-|	{} /*epsilon*/
+|	{} epsilon
 }
 
 void Logic1():
@@ -712,15 +763,15 @@ void Logic2():
 {}
 {
 	<OR> Expr()
-| 	{} /*epsilon*/
+| 	{} epsilon
 }
 
 void Logic3():
 {}
 {
 	Expr()
-{
-
+}
+*/
 void UnaryNegExpr():
 {}
 {
@@ -732,23 +783,35 @@ void UnaryNotExpr():
 {
 	<NOT> Expr()
 }
-
+/*
 void UnaryIncrExpr():
 {}
 {
 	//fix precedence
-	<INCREMENT> Expr()
-|	Expr() <INCREMENT>
+    <INCREMENT> Expr() UnaryIncrExprPrime()
+}
+
+void UnaryIncrExprPrime():
+{}
+{
+    <INCREMENT> UnaryIncrExprPrime() 
+	|   {}
 }
 
 void UnaryDecrExpr():
 {}
 {
 	//fix precedence
-	<DECREMENT> Expr()
-|	Expr() <DECREMENT>
+    <DECREMENT> Expr() UnaryDecrExprPrime()
 }
 
+void UnaryDecrExprPrime():
+{}
+{
+    <DECREMENT> UnaryDecrExprPrime()
+	|   {}
+}
+*/
 /*void VarExpr():
 {}
 {
@@ -760,33 +823,33 @@ void VarExpr'():
 {}
 {
 	<LBRACKET> Expr() <RBRACKET>
-|	{} /*epsilon*/
+|	{} epsilon
 }
 
-void VarExpr''():
+void VarExprDoublePrime():
 {}
 {
 	<LBRACKET> Expr() <RBRACKET> 
-|	{} /*epsilon*/
-} */
+|	{} epsilon
+}*/ 
 
 void VarExpr():
 {}
 {
-	Expr() <MEMBEROF> <ID> VarExpr`()
-|	<ID> VarExpr`()
+       	<ID> VarExprPrime() VarExprPrime() 
+	
 }
 
-void VarExpr`():
+void VarExprPrime():
+{}   
+{
+    <MEMBERREF> <ID> VarExprDoublePrime() VarExprPrime()
+    |{}
+}
+
+void VarExprDoublePrime():
 {}
 {
 	<LBRACKET> Expr() <RBRACKET>
 |	{} /*epsilon*/
 }
-
-
-
-
-
-
-
