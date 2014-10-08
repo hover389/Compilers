@@ -352,9 +352,10 @@ void MoreMember():
 void Member():
 {}
 {
-	Method() Field()
+	Method() 
+|	Field()
 }
-
+/*
 void Method():
 {}
 {
@@ -367,6 +368,20 @@ void Method'():
 	<LBRACKET> <RBRACKET> <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
 |	<ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
 }
+*/
+
+void Method():
+{}
+{
+	<ID> <ID> <LPAREN> Method`()
+}
+
+void Method`():
+{}
+{
+	MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
+}
+
 
 void MoreFormal():
 {}
@@ -445,8 +460,14 @@ void DeclStmt():
 void DeclStmt'():
 {}
 {
-	<LBRACKET> <RBRACKET> <ID> <ASSIGN> Expr() <SEMICOLON>
-|	<ID> <ASSIGN> Expr() <SEMICOLON>
+	<LBRACKET> <RBRACKET> DeclStmt``()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
+|	DeclStmt``()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
+}
+
+void Declstmt``():
+{}
+{
+	<ID> <ASSIGN> Expr() <SEMICOLON>
 }
 
 void IfStmt():
@@ -559,8 +580,14 @@ void AssignExpr():
 void DispatchExpr():
 {}
 {
-	Expr() <MEMBERREF> <ID> <LPAREN> MoreExpr() <RPAREN>
-|	<ID> <LPAREN> MoreExpr() <RPAREN>
+	Expr() <MEMBERREF> DispatchExpr`()/*<ID> <LPAREN> MoreExpr() <RPAREN>*/
+|	DispatchExpr`()/*<ID> <LPAREN> MoreExpr() <RPAREN>*/
+}
+
+void DispatchExpr`():
+{}
+{
+	<ID> <LPAREN> MoreExpr() <RPAREN>
 }
 
 void MoreExpr():
@@ -660,14 +687,21 @@ void Arith3()"
 {}
 {
 	<LPAREN> Expr() <RPAREN>
-|	<Expr()
+|	Expr()
 }
 
 void BinaryCompExpr():
 {}
 {
-
+	Expr() Binary CompExpr`()
 }
+
+void BinaryCompExpr`():
+{}
+{
+	<AND> Expr()
+|	<OR> Expr()
+
 //Binary logic might be wrong
 void BinaryLogicExpr();
 {}
@@ -729,7 +763,7 @@ void UnaryDecrExpr():
 |	Expr() <DECREMENT>
 }
 
-void VarExpr():
+/*void VarExpr():
 {}
 {
 	Expr() <MEMBERREF> <ID> VarExpr'()
@@ -748,9 +782,21 @@ void VarExpr''():
 {
 	<LBRACKET> Expr() <RBRACKET> 
 |	{} /*epsilon*/
+} */
+
+void VarExpr():
+{}
+{
+	Expr() <MEMBEROF> <ID> VarExpr`()
+|	<ID> VarExpr`()
 }
 
-	
+void VarExpr`():
+{}
+{
+	<LBRACKET> Expr() <RBRACKET>
+|	{} /*epsilon*/
+}
 
 
 
