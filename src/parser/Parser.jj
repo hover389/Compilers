@@ -265,34 +265,13 @@ Precedence (from highest to lowest)
 void Program() :
 {}
 {
-   Class() MoreClass() <EOF>
-}
-
-void MoreClass():
-{}
-{
-	Class() MoreClass()
-|	{} /*epsilon*/
+   (Class())+  <EOF>
 }
 
 void Class():
 {}
 {
-	<CLASS> <ID> ClassPrime()
-}
-
-void ClassPrime():
-{}
-{
-	<EXTENDS> <ID> <LBRACE> MoreMember() <RBRACE>
-|	<LBRACE> MoreMember() <RBRACE>
-}
-
-void MoreMember():
-{}
-{
-	Member() MoreMember()
-|	{} /*epsilon*/
+	<CLASS> <ID> (<EXTENDS> <ID>)? <LBRACE> (Member())* <RBRACE>
 }
 
 void Member():
@@ -306,83 +285,29 @@ void Member():
 void Method():
 {}
 {
-	<ID> MethodPrime()
-}
-/*
-void MethodPrime():
-{}
-{
-    <LBRACKET> <RBRACKET> <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE> 
-|   <ID> <LPAREN> MoreFormal() <RPAREN> <LBRACE> MoreStmt() <RBRACE>
-}
-*/
-
-
-void MethodPrime():
-{}
-{
-    <LBRACKET> <RBRACKET> <ID> <LPAREN> (Formal() <COMMA>)*   <RPAREN> <LBRACE> (Stmt())* <RBRACE>
-    |	<ID> <LPAREN> (Formal() <COMMA> )*  <RPAREN> <LBRACE> (Stmt())* <RBRACE>
+	<ID> (<LBRACKET><RBRACKET>)? <ID> <LPAREN> (Formal() (<COMMA>)*)* <RPAREN> <LBRACE> (Stmt())* <RBRACE>
 }
 
-
-
-
-
-void MoreFormal():
-{}
-{
-	Formal() MoreFormalPrime()
-	    |	{} /*epsilon*/
-}
-
-void MoreFormalPrime():
-{}
-{
-	<COMMA> Formal() MoreFormalPrime()
-	|	{} /*epsilon*/
-}
 
 void Field():
 {}
 {
-	<ID> FieldPrime()
+	<ID> (<LBRACKET> <RBRACKET>)? <ID> (<ASSIGN> Expr())? <SEMICOLON>
 
-}
-
-void FieldPrime():
-{}
-{
-	<LBRACKET> <RBRACKET> <ID> FieldDoublePrime()
-|	<ID> FieldDoublePrime()
-}
-
-void FieldDoublePrime():
-{}
-{
-	<ASSIGN> Expr() <SEMICOLON>
-|	<SEMICOLON>
 }
 
 void Formal():
 {}
 {
-	<ID> FormalPrime()
-}
-
-void FormalPrime():
-{}
-{
-	<LBRACKET> <RBRACKET> <ID>
-|	<ID>
+	<ID> (<LBRACKET> <RBRACKET>)? <ID>
 }
 
 void Stmt():
 {}
 {
-    LOOKAHEAD(2)
+    LOOKAHEAD(3)
 	ExprStmt()
-|	DeclStmt()
+|	LOOKAHEAD(3)DeclStmt()
 |	IfStmt()
 |	WhileStmt()
 |	ForStmt()
@@ -395,41 +320,22 @@ void Stmt():
 void ExprStmt():
 {}
 {
-	Expr()
+	Expr() <SEMICOLON>
 }
 
 void DeclStmt():
 {}
 {
-	<ID> DeclStmtPrime()
+	<ID> (<LBRACKET> <RBRACKET>)? <ID> <ASSIGN> Expr() <SEMICOLON>
 }
 
-void DeclStmtPrime():
-{}
-{
-	<LBRACKET> <RBRACKET> DeclStmtDoublePrime()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
-|	DeclStmtDoublePrime()/*<ID> <ASSIGN> Expr() <SEMICOLON>*/
-}
-
-void DeclStmtDoublePrime():
-{}
-{
-	<ID> <ASSIGN> Expr() <SEMICOLON>
-}
 
 void IfStmt():
 {}
 {
-	<IF> <LPAREN> Expr() <RPAREN> IfStmtPrime() 
+	LOOKAHEAD(2)<IF> <LPAREN> Expr() <RPAREN> Stmt() (<ELSE> Stmt())?
 }
 
-void IfStmtPrime():
-{}
-{
-    
-     	<ELSE> Stmt()
-|       {}
-}
 
 void WhileStmt():
 {}
@@ -440,37 +346,8 @@ void WhileStmt():
 void ForStmt():
 {}
 {
-	<FOR> <LPAREN> ForStmtPrime()
+	<FOR> <LPAREN> (Expr())? <SEMICOLON> (Expr())? <SEMICOLON> (Expr())? <RPAREN> Stmt()
 }
-
-void ForStmtPrime():
-{}
-{
-	Expr() <SEMICOLON> ForStmtDoublePrime()
-|	<SEMICOLON> ForStmtQuadPrime()
-}
-
-void ForStmtDoublePrime():
-{}
-{
-	<SEMICOLON> ForStmtTriplePrime()
-|	Expr() <SEMICOLON> ForStmtTriplePrime()
-}
-
-void ForStmtTriplePrime():
-{}
-{
-	Expr() <RPAREN> Stmt()
-|	<RPAREN> Stmt()
-}
-
-void ForStmtQuadPrime():
-{}
-{
-	<SEMICOLON> ForStmtTriplePrime()
-|	Expr() <SEMICOLON> ForStmtTriplePrime()
-}
-
 
 void BreakStmt():
 {}
@@ -481,15 +358,9 @@ void BreakStmt():
 void ReturnStmt():
 {}
 {
-	<RETURN> ReturnStmtPrime()
+	<RETURN> (Expr())? <SEMICOLON>
 }
 
-void ReturnStmtPrime():
-{}
-{
-	Expr() <SEMICOLON>
-|	<SEMICOLON>
-}
 
 void BlockStmt():
 {}
@@ -497,359 +368,172 @@ void BlockStmt():
     <LBRACE> (Stmt())* <RBRACE>
 }
 
-/*
-void MoreStmt():
-{}
-{
-    Stmt() MoreStmt() | {}
-}
-*/
 
 void Expr():
 {}
 {
-    LOOKAHEAD(3)
-    AssignExpr() ExprPrime()
-	|	LOOKAHEAD(2) DispatchExpr() ExprPrime()
-	|	LOOKAHEAD(2) NewExpr() ExprPrime()
-	|	LOOKAHEAD(3)CastExpr() ExprPrime()
-	//|	BinaryExpr() ExprPrime()
-|	UnaryExpr() ExprPrime() 
-|	ConstExpr() ExprPrime() 
-|	VarExpr() ExprPrime()
-|	<LPAREN> Expr() <RPAREN> ExprPrime()
-	|       <INCREMENT> Expr() ExprPrime()
-	|      <DECREMENT> Expr() ExprPrime()
-	
-}
+	<ID> (<LBRACKET> Expr() <RBRACKET>)? ExprPrime()
+|	Expr1() ExprPrime()
 
-void ExprDoublePrime():
-{}
-{
-    LOOKAHEAD(3)
-    AssignExpr() ExprPrime()
-	|	LOOKAHEAD(3) DispatchExpr() ExprPrime()
-|	NewExpr() ExprPrime()
-	|	LOOKAHEAD(3)CastExpr() ExprPrime()
-	//|	BinaryExpr() ExprPrime()
-|	UnaryExpr() ExprPrime() 
-|	ConstExpr() ExprPrime() 
-|	VarExpr() ExprPrime()
-|	<LPAREN> Expr() <RPAREN> ExprPrime()
-	|       <INCREMENT> Expr() ExprPrime()
-	|      <DECREMENT> Expr() ExprPrime()
-	| <MEMBERREF> <ID> <LPAREN> MoreExpr() <RPAREN> ExprDoublePrime() 
-	|{}
-	
+
 }
 
 void ExprPrime():
 {}
 {
-    LOOKAHEAD(3)
-    <INSTOF> <ID> ExprPrime() 
-|   <INSTOF> <ID> <LBRACKET> <RBRACKET> ExprPrime()
-|   <ADD> Expr() ExprPrime() 
-|   <SUB> Expr() ExprPrime()
-|   <MULT> Expr() ExprPrime()
-|   <DIV>  Expr() ExprPrime()
-|   <MOD> Expr() ExprPrime()
-|   <EQUALS> Expr() ExprPrime()
-|   <NOTEQUALS>  Expr() ExprPrime()
-|   <LESSTHAN>  Expr() ExprPrime()
-|   <LESSEQUAL>  Expr() ExprPrime()
-|   <GREATERTHAN>  Expr() ExprPrime()
-|   <GREATEREQUAL>  Expr() ExprPrime()
-|    <AND> Expr() ExprPrime()
-|   <OR> Expr() ExprPrime()
-|   <INCREMENT> | <DECREMENT>
-	|   {}
-}
-
-void AssignExpr():
-{}
-{
-	VarExpr() <ASSIGN> Expr()
-}
-
-void DispatchExpr():
-{}
-{
-      /*<ID> <LPAREN> MoreExpr() <RPAREN>*/
-	 	DispatchExprPrime() DispatchExprDoublePrime()  /*<ID> <LPAREN> MoreExpr() <RPAREN>*/
-}
-
-void DispatchExprDoublePrime():
-{}
-{
-    <MEMBERREF> DispatchExprPrime() DispatchExprDoublePrime()
-|   {}
-}
-
-void DispatchExprPrime():
-{}
-{
-    <ID> <LPAREN> MoreExpr() <RPAREN> ExprDoublePrime()
-	
-}
-
-
-void MoreExpr():
-{}
-{
-	Expr() MoreExprPrime()
-|	{} /*epsilon*/
-}
-void MoreExprPrime():
-{}
-{
-	<COMMA> Expr() MoreExpr()
-|	{} /*epsilon*/
-}
-
-void NewExpr():
-{}
-{
-    LOOKAHEAD(3)
-	<NEW> <ID> <LPAREN> <RPAREN> | <NEW> <ID> <LBRACKET> Expr() <RBRACKET>
-}
-
-/*
-void InstanceofExpr():
-{}
-{
-     <INSTOF> <ID> InstanceofExprPrime() InstanceofExpr()
-|   {}
-}
-
-void InstanceofExprPrime():
-{}
-{
-	<LBRACKET> <RBRACKET>
+	<MEMBERREF> <ID> (<LBRACKET> Expr() <RBRACKET>)? ExprPrime()
 |	{}
 }
-*/
-void CastExpr():
+
+void Expr1():
 {}
 {
-	<LPAREN> <ID> CastExprPrime()
+	Expr2() Expr1Prime()
 }
 
-void CastExprPrime():
+void Expr1Prime():
 {}
 {
-	<LBRACKET> <RBRACKET> <RPAREN> <LPAREN> Expr() <RPAREN>
-|	<RPAREN> <LPAREN> Expr() <RPAREN>
+	<OR> Expr2() Expr1Prime()
+|	{}
 }
-/*
-void BinaryExpr():
+
+
+void Expr2():
 {}
 {
-	BinaryArithExpr()  | BinaryCompExpr() | BinaryLogicExpr()
+	Expr3() Expr2Prime()
 }
-*/
-void UnaryExpr():
+
+void Expr2Prime():
 {}
 {
-    UnaryNegExpr() | UnaryNotExpr() //| UnaryIncrExpr() | UnaryDecrExpr()
+	<AND> Expr3()
+|	{}
 }
+
+void Expr3():
+{}
+{
+	Expr4() Expr3Prime()
+}
+
+void Expr3Prime():
+{}
+{
+	<EQUALS> Expr4() Expr3Prime()
+|	<NOTEQUALS> Expr4() Expr3Prime()
+|	{}
+}
+
+void Expr4():
+{}
+{
+	Expr5() Expr4Prime()
+
+}
+
+void Expr4Prime():
+{}
+{
+	LOOKAHEAD(2)<INSTOF> <ID> (<LBRACKET> <RBRACKET>)? Expr4Prime()
+|	<LESSTHAN> Expr5() Expr4Prime()
+|	<LESSEQUAL> Expr5() Expr4Prime()
+|	<GREATERTHAN> Expr5() Expr4Prime()
+|	<GREATEREQUAL> Expr5() Expr4Prime()
+|	{}
+}
+
+void Expr5():
+{}
+{
+	Expr6() Expr5Prime()
+}
+
+void Expr5Prime():
+{}
+{
+	<ADD> Expr6() Expr5Prime()
+|	<SUB> Expr6() Expr5Prime()
+|	{}
+}
+
+void Expr6():
+{}
+{
+	Expr7() Expr6Prime()
+}
+
+void Expr6Prime():
+{}
+{
+	<MULT> Expr7() Expr6Prime()
+|	<DIV> Expr7() Expr6Prime()
+|	<MOD> Expr7() Expr6Prime()
+|	{}
+}
+
+void Expr7():
+{}
+{
+	LOOKAHEAD(2)<LPAREN> <ID> (<LBRACKET> <RBRACKET>)? <RPAREN>	<LPAREN> Expr7() <RPAREN>
+|	Expr8()
+}
+
+void Expr8():
+{}
+{
+	<SUB> Expr8()
+|	<NOT> Expr8()
+|	<INCREMENT> Expr8()
+|	<DECREMENT> Expr8()
+|	Expr9()
+}
+
+void Expr9():
+{}
+{
+	
+
+	<ID> <LPAREN> (Expr() (<COMMA>)*)* <RPAREN> Expr9Prime()
+|	Expr10() Expr9Prime()
+|	<LBRACKET> <RBRACKET> Expr9Prime()
+}
+
+void Expr9Prime():
+{}
+{
+	<INCREMENT> Expr9Prime()
+|	<DECREMENT> Expr9Prime()
+|	<MEMBERREF> <ID> <LPAREN> (Expr() (<COMMA>)*)* <RPAREN> Expr9Prime()
+|	{}
+}
+
+void Expr10():
+{}
+{
+	<NEW> <ID> Expr10Prime()
+|	Expr11()	
+}
+
+void Expr10Prime():
+{}
+{
+	<LPAREN> <RPAREN>
+|	<LBRACKET> Expr10() <RBRACKET>
+}
+
+void Expr11():
+{}
+{
+	ConstExpr()
+|	<LPAREN> Expr() <RPAREN>
+}
+
 
 void ConstExpr():
 {}
 {
 	<INT_CONST> | <BOOLEAN_CONST> | <STRING_CONST>
 }
-/*
-void BinaryArithExpr():
-{}
-{
-    <ADD> Expr() BinaryArithExpr() 
-|   <SUB> Expr() BinaryArithExpr()
-|   <MULT> Expr() BinaryArithExpr()
-|   <DIV>  Expr() BinaryArithExpr()
-|   <MOD> Expr() BinaryArithExpr()
-|   {}
-    
-}
-/*
-/*
-void Arith():
-{}
-{
-	<ADD> Expr()
-|	<SUB> Expr()
-|	{} epsilon
-}
 
-void Arith1():
-{}
-{
-	Arith3() Arith2()
-}
-
-void Arith2():
-{}
-{
-	<MULT> Arith1()
-|	<DIV> Arith1()
-|	<MOD> Arith1()
-|	{} epsilon
-}
-
-void Arith3():
-{}
-{
-    <LPAREN> Expr() <RPAREN> Arith3Prime()
-|	Expr()
-}
-
-void Arith3Prime():
-{}
-{
-    Arith3Prime()
-|   {}
-}
-*/
-
-
-/*
-void BinaryCompExpr():
-{}
-{
-    <EQUALS> Expr() BinaryCompExpr()
-|   <NOTEQUALS>  Expr() BinaryCompExpr()
-|   <LESSTHAN>  Expr() BinaryCompExpr()
-|   <LESSEQUAL>  Expr() BinaryCompExpr()
-|   <GREATERTHAN>  Expr() BinaryCompExpr()
-|   <GREATEREQUAL>  Expr() BinaryCompExpr()
-|   {}
-    
-}
-*/
-/*
-void BinaryCompExprPrime():
-{}
-{
-	<AND> Expr()
-|	<OR> Expr()
-}
-*/
-//Binary logic might be wrong
-/*
-void BinaryLogicExpr():
-{}
-{
-    <AND> Expr() BinaryLogicExpr()
-|   <OR> Expr() BinaryLogicExpr()
-	|    {} 
-   
-}
-*/
-/*
-void Logic():
-{}
-{
-	<AND> Expr()
-|	{} epsilon
-}
-
-void Logic1():
-{}
-{
-	Logic3() Logic2()
-}
-
-void Logic2():
-{}
-{
-	<OR> Expr()
-| 	{} epsilon
-}
-
-void Logic3():
-{}
-{
-	Expr()
-}
-*/
-void UnaryNegExpr():
-{}
-{
-	<SUB> Expr()
-}
-
-void UnaryNotExpr():
-{}
-{
-	<NOT> Expr()
-}
-/*
-void UnaryIncrExpr():
-{}
-{
-	//fix precedence
-    <INCREMENT> Expr() UnaryIncrExprPrime()
-}
-
-void UnaryIncrExprPrime():
-{}
-{
-    <INCREMENT> UnaryIncrExprPrime() 
-	|   {}
-}
-
-void UnaryDecrExpr():
-{}
-{
-	//fix precedence
-    <DECREMENT> Expr() UnaryDecrExprPrime()
-}
-
-void UnaryDecrExprPrime():
-{}
-{
-    <DECREMENT> UnaryDecrExprPrime()
-	|   {}
-}
-*/
-/*void VarExpr():
-{}
-{
-	Expr() <MEMBERREF> <ID> VarExpr'()
-|	<MEMBERREF> <ID> VarExpr''()
-}
-
-void VarExpr'():
-{}
-{
-	<LBRACKET> Expr() <RBRACKET>
-|	{} epsilon
-}
-
-void VarExprDoublePrime():
-{}
-{
-	<LBRACKET> Expr() <RBRACKET> 
-|	{} epsilon
-}*/ 
-
-void VarExpr():
-{}
-{
-       	<ID> VarExprPrime() VarExprPrime() 
-	
-}
-
-void VarExprPrime():
-{}   
-{
-    <MEMBERREF> <ID> VarExprDoublePrime() VarExprPrime()
-    |{}
-}
-
-void VarExprDoublePrime():
-{}
-{
-	<LBRACKET> Expr() <RBRACKET>
-|	{} /*epsilon*/
-}
