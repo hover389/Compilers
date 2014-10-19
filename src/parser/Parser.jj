@@ -285,7 +285,7 @@ void Member():
 void Method():
 {}
 {
-	<ID> (<LBRACKET><RBRACKET>)? <ID> <LPAREN> (Formal() (<COMMA>)*)* <RPAREN> <LBRACE> (Stmt())* <RBRACE>
+	<ID> (<LBRACKET><RBRACKET>)? <ID> <LPAREN> (Formal() (<COMMA>))* <RPAREN> <LBRACE> (Stmt())* <RBRACE>
 }
 
 
@@ -333,7 +333,7 @@ void DeclStmt():
 void IfStmt():
 {}
 {
-	LOOKAHEAD(2)<IF> <LPAREN> Expr() <RPAREN> Stmt() (<ELSE> Stmt())?
+	<IF> <LPAREN> Expr() <RPAREN> Stmt() (LOOKAHEAD(2)<ELSE> Stmt())?
 }
 
 
@@ -369,10 +369,11 @@ void BlockStmt():
 }
 
 
+
 void Expr():
 {}
 {
-	<ID> (<LBRACKET> Expr() <RBRACKET>)? ExprPrime()
+	LOOKAHEAD(2)<ID> (<LBRACKET> Expr() <RBRACKET>)? <ASSIGN> Expr() ExprPrime()
 |	Expr1() ExprPrime()
 
 
@@ -381,97 +382,61 @@ void Expr():
 void ExprPrime():
 {}
 {
-	<MEMBERREF> <ID> (<LBRACKET> Expr() <RBRACKET>)? ExprPrime()
+	<MEMBERREF> <ID> (<LBRACKET> Expr() <RBRACKET>)? <ASSIGN> Expr() ExprPrime()
 |	{}
 }
 
 void Expr1():
 {}
 {
-	Expr2() Expr1Prime()
-}
-
-void Expr1Prime():
-{}
-{
-	<OR> Expr2() Expr1Prime()
-|	{}
+	Expr2() (<OR> Expr2())*
 }
 
 
 void Expr2():
 {}
 {
-	Expr3() Expr2Prime()
+	Expr3() (<AND> Expr3())*
 }
 
-void Expr2Prime():
-{}
-{
-	<AND> Expr3()
-|	{}
-}
 
 void Expr3():
 {}
 {
-	Expr4() Expr3Prime()
+	Expr4() (<EQUALS>|<NOTEQUALS> Expr4())*
 }
 
-void Expr3Prime():
-{}
-{
-	<EQUALS> Expr4() Expr3Prime()
-|	<NOTEQUALS> Expr4() Expr3Prime()
-|	{}
-}
 
 void Expr4():
 {}
 {
-	Expr5() Expr4Prime()
+	Expr5() (<LESSTHAN>|<GREATERTHAN>|<LESSEQUAL>|<GREATEREQUAL> Expr5())* Expr4Prime()
 
 }
 
 void Expr4Prime():
 {}
 {
-	LOOKAHEAD(2)<INSTOF> <ID> (<LBRACKET> <RBRACKET>)? Expr4Prime()
-|	<LESSTHAN> Expr5() Expr4Prime()
-|	<LESSEQUAL> Expr5() Expr4Prime()
-|	<GREATERTHAN> Expr5() Expr4Prime()
-|	<GREATEREQUAL> Expr5() Expr4Prime()
+	<INSTOF> <ID> (LOOKAHEAD(2)<LBRACKET><RBRACKET>)? Expr4Prime()
 |	{}
 }
+
 
 void Expr5():
 {}
 {
-	Expr6() Expr5Prime()
+//fix!!!!!!!!!!!!!!!!!!!!!!
+	Expr6() (<SUB>|<ADD> Expr6())*
 }
 
-void Expr5Prime():
-{}
-{
-	<ADD> Expr6() Expr5Prime()
-|	<SUB> Expr6() Expr5Prime()
-|	{}
-}
+
 
 void Expr6():
 {}
 {
-	Expr7() Expr6Prime()
+	Expr7() (<MULT>|<DIV>|<MOD> Expr7())*
 }
 
-void Expr6Prime():
-{}
-{
-	<MULT> Expr7() Expr6Prime()
-|	<DIV> Expr7() Expr6Prime()
-|	<MOD> Expr7() Expr6Prime()
-|	{}
-}
 
 void Expr7():
 {}
@@ -483,7 +448,7 @@ void Expr7():
 void Expr8():
 {}
 {
-	<SUB> Expr8()
+	<SUB> Expr8()	
 |	<NOT> Expr8()
 |	<INCREMENT> Expr8()
 |	<DECREMENT> Expr8()
@@ -495,7 +460,7 @@ void Expr9():
 {
 	
 
-	<ID> <LPAREN> (Expr() (<COMMA>)*)* <RPAREN> Expr9Prime()
+	<ID> <LPAREN> (Expr() (<COMMA>)?)* <RPAREN> Expr9Prime()
 |	Expr10() Expr9Prime()
 |	<LBRACKET> <RBRACKET> Expr9Prime()
 }
@@ -505,7 +470,7 @@ void Expr9Prime():
 {
 	<INCREMENT> Expr9Prime()
 |	<DECREMENT> Expr9Prime()
-|	<MEMBERREF> <ID> <LPAREN> (Expr() (<COMMA>)*)* <RPAREN> Expr9Prime()
+|	<MEMBERREF> <ID> <LPAREN> (Expr() (<COMMA>)?)* <RPAREN> Expr9Prime()
 |	{}
 }
 
@@ -520,7 +485,7 @@ void Expr10Prime():
 {}
 {
 	<LPAREN> <RPAREN>
-|	<LBRACKET> Expr10() <RBRACKET>
+|	<LBRACKET> Expr11() <RBRACKET>
 }
 
 void Expr11():
